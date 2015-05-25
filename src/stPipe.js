@@ -10,22 +10,32 @@ ng.module('smart-table')
         pre: function (scope, element, attrs, ctrl) {
 
           var pipePromise = null;
+          var counter = 0;
+          var interval = setInterval(function(){
+            if (ng.isFunction(scope.stPipe)) {
+              clearInterval(interval);
+              ctrl.preventPipeOnWatch();
+              ctrl.pipe = function () {
 
-          if (ng.isFunction(scope.stPipe)) {
-            ctrl.preventPipeOnWatch();
-            ctrl.pipe = function () {
+                if (pipePromise !== null) {
+                  $timeout.cancel(pipePromise)
+                }
 
-              if (pipePromise !== null) {
-                $timeout.cancel(pipePromise)
+                pipePromise = $timeout(function () {
+                  scope.stPipe(ctrl.tableState(), ctrl);
+                }, config.pipe.delay);
+
+                return pipePromise;
+              };
+              ctrl.pipe();
+            } else {
+              counter++;
+              if (counter === 50) {
+                clearInterval(interval);
               }
-
-              pipePromise = $timeout(function () {
-                scope.stPipe(ctrl.tableState(), ctrl);
-              }, config.pipe.delay);
-
-              return pipePromise;
             }
-          }
+          }, 100);
+
         },
 
         post: function (scope, element, attrs, ctrl) {
